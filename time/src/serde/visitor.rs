@@ -3,6 +3,8 @@
 use core::fmt;
 use core::marker::PhantomData;
 
+use std::string::String;
+
 use serde::de;
 #[cfg(feature = "parsing")]
 use serde::Deserializer;
@@ -86,7 +88,11 @@ impl<'a> de::Visitor<'a> for Visitor<OffsetDateTime> {
 
     #[cfg(feature = "parsing")]
     fn visit_str<E: de::Error>(self, value: &str) -> Result<OffsetDateTime, E> {
-        OffsetDateTime::parse(value, &OFFSET_DATE_TIME_FORMAT).map_err(E::custom)
+        let mut value = String::from(value);
+        if !value.ends_with("Z") {
+            value.push('Z');
+        }
+        OffsetDateTime::parse(&value, &OFFSET_DATE_TIME_FORMAT).map_err(E::custom)
     }
 
     fn visit_seq<A: de::SeqAccess<'a>>(self, mut seq: A) -> Result<OffsetDateTime, A::Error> {
@@ -309,7 +315,11 @@ macro_rules! well_known {
             }
 
             fn visit_str<E: de::Error>(self, value: &str) -> Result<OffsetDateTime, E> {
-                OffsetDateTime::parse(value, &$($ty)+).map_err(E::custom)
+                let mut value = String::from(value);
+                if !value.ends_with("Z") {
+                    value.push('Z');
+                }
+                OffsetDateTime::parse(&value, &$($ty)+).map_err(E::custom)
             }
         }
 
